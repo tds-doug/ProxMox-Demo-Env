@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Mock `pct`: records argv, keeps tiny state under $MOCK_DIR. NOT a Proxmox emulator.
+echo "pct $*" >>"$MOCK_DIR/pct.log"
+cmd=$1; shift
+ctf() { echo "$MOCK_DIR/ct-$1"; }
+case $cmd in
+  status) [[ -f $(ctf "$1") ]] && { echo "status: $(sed -n 's/^__state: //p' "$(ctf "$1")")"; exit 0; } || exit 2 ;;
+  create)
+    id=$1; shift 2   # id, template
+    f=$(ctf "$id"); echo "__state: stopped" >"$f"
+    while (($#)); do
+      case $1 in
+        --hostname) echo "hostname: $2" >>"$f" ;;
+        --cores) echo "cores: $2" >>"$f" ;;
+        --memory) echo "memory: $2" >>"$f" ;;
+        --swap) echo "swap: $2" >>"$f" ;;
+        --unprivileged) echo "unprivileged: $2" >>"$f" ;;
+        --onboot) echo "onboot: $2" >>"$f" ;;
+        --net0) echo "net0: $2" >>"$f" ;;
+        --features) echo "features: $2" >>"$f" ;;
+        --rootfs) sz=${2#*:}; echo "rootfs: ${2%%:*}:vm-$id-disk-0,size=${sz}G" >>"$f" ;;
+      esac; shift 2
+    done ;;
+  start) sed -i 's/^__state: .*/__state: running/' "$(ctf "$1")" ;;
+  reboot) ;;
+  config) grep -v '^__' "$(ctf "$1")" ;;
+  set|snapshot|push) ;;
+  exec)
+    id=$1; shift; [[ $1 == -- ]] && shift
+    case $1 in
+      ip) echo "2: eth0    inet 192.168.50.23/24 brd 192.168.50.255 scope global eth0" ;;
+      id) [[ -f $MOCK_DIR/user-exists ]] ;;
+      useradd) touch "$MOCK_DIR/user-exists" ;;
+      chpasswd) k=$(ls "$MOCK_DIR"/chpasswd.stdin.* 2>/dev/null | wc -l); cat >"$MOCK_DIR/chpasswd.stdin.$((k + 1))" ;;
+      env)
+        if printf '%s ' "$@" | grep -q verify.sh; then
+          echo "RESULT|PASS|Apache serves landing page|HTTP 200"
+          echo "RESULT|PASS|MariaDB local-only|127.0.0.1:3306"
+        fi ;;
+      *) ;;
+    esac ;;
+  *) echo "mock pct: unhandled $cmd" >&2; exit 1 ;;
+esac

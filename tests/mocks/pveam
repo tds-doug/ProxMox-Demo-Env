@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+echo "pveam $*" >>"$MOCK_DIR/pveam.log"
+case $1 in
+  available)
+    echo "system  ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+    echo "system  ubuntu-24.04-standard_24.04-1_amd64.tar.zst"
+    echo "system  ubuntu-24.04-standard_24.10-2_amd64.tar.zst"
+    echo "system  debian-12-standard_12.7-1_amd64.tar.zst" ;;
+  list) [[ -f $MOCK_DIR/template-cached ]] && echo "local:vztmpl/ubuntu-24.04-standard_24.04-1_amd64.tar.zst 100MB" ;;
+esac
+exit 0

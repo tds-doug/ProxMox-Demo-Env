@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+echo "pvesm $*" >>"$MOCK_DIR/pvesm.log"
+if [[ $1 == status ]]; then
+  content=""; [[ $2 == --content ]] && content=$3
+  echo "Name Type Status Total Used Available %"
+  case $content in
+    rootdir) echo "local dir active 1 1 1 1%"; echo "local-lvm lvmthin active 1 1 1 1%" ;;
+    vztmpl)  echo "local dir active 1 1 1 1%" ;;
+    "")      echo "local dir active 1 1 1 1%"; echo "local-lvm lvmthin active 1 1 1 1%"; echo "tank zfspool inactive 1 1 1 1%" ;;
+  esac
+fi

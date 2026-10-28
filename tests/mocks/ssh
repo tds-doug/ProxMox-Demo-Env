@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Mock ssh: authenticates only if the askpass helper yields $EXPECT_PW (tests the FIFO path).
+echo "ssh ${*//$EXPECT_PW/***}" >>"$MOCK_DIR/ssh.log"
+target=""; for a in "$@"; do [[ $a == *@* ]] && target=$a; done
+if [[ $target == root@* ]]; then echo "root@x: Permission denied (publickey,password)." >&2; exit 255; fi
+got=$("$SSH_ASKPASS")
+if [[ $got == "$EXPECT_PW" ]]; then echo "${target%@*}"; else echo "Permission denied" >&2; exit 255; fi

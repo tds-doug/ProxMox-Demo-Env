@@ -1,0 +1,5 @@
+# Local, site-specific configuration (never commit)
+config/demo.env
+config/*.local.env
+*.log
+logs/
